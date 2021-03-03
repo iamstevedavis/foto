@@ -1,0 +1,15 @@
+[DEFAULT]
+imageDir = ./files/
+
+[VIEWER]
+# How much time should elapse before moving to the next image
+timePerPicture = 5
+# How often, in minutes, should we wait between new image fetches
+newPictureFetchDelay = 30
+
+[EMAIL]
+emailDomain = @gmail.com
+smtpServer = imap.gmail.com
+smtpPort = 993
+# emailPassword = myPassword
+# emailHandle = myEmailHandle
