@@ -5,11 +5,11 @@ name = "pypi"
 
 [packages]
 "plone.rfc822" = "*"
-pygame = "*"
+pygame = "2"
 
 [dev-packages]
 pylint = "*"
 autopep8 = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3"

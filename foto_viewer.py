@@ -1,6 +1,5 @@
 # First Party Imports #
 import os
-import sys
 from datetime import datetime, timedelta
 
 # Third Party Imports #
@@ -11,18 +10,22 @@ import pygame
 from foto_cycle import cycle  # Small custom implementation of itertools.cycle
 from foto_getter import read_email
 
+# Set global constants from config
 config = configparser.ConfigParser(interpolation=None)
 config.sections()
 config.read(['.env', 'config'])
-viewer_config = config['VIEWER']
+VIEWER_CONFIG = config['VIEWER']
+IMAGE_DIR = config['DEFAULT'].get("imageDir")
+TIME_PER_PICTURE = VIEWER_CONFIG.get('timePerPicture')
+NEW_PICTURE_FETCH_DELAY = VIEWER_CONFIG.get('newPictureFetchDelay')
 
 # Gets all images in the 'imageDir' directory filtered on the filetypes listed
 # Currently only jpg files are downloaded
 
 
-def find_image_filename():
+def find_image_filenames():
     image_filenames = []
-    for filename in os.listdir(config['DEFAULT'].get("imageDir")):
+    for filename in os.listdir(IMAGE_DIR):
         if filename.lower().endswith(".bmp"):
             image_filenames.append(filename)
         if filename.lower().endswith(".gif"):
@@ -53,7 +56,7 @@ def find_display_driver():
 
 def change_image(screen, image_filename, width, height):
     image = pygame.image.load(
-        'files/{}'.format(image_filename))
+        '{}/{}'.format(IMAGE_DIR, image_filename))
     # Is there a better function that maintains aspect ratio?
     image = pygame.transform.scale(image, (width, height))
     screen.blit(image, (0, 0))
@@ -63,19 +66,23 @@ def change_image(screen, image_filename, width, height):
 
 
 def display_image():
-    # Start by fetching images
-    read_email()
-    last_image_fetch_time = datetime.now() - timedelta(hours=0, minutes=30)
-    # Create a new cycle
-    image_filenames = cycle(find_image_filename())
-    if not image_filenames:
-        print("No image files found")
-        sys.exit()
+    if not pygame.image.get_extended():
+        raise SystemExit(
+            "Extended image module missing. Did you install all libsdl2 libraries from the readme?")
 
     pygame.init()
     if not find_display_driver():
-        print("Failed to initialise display driver")
-        sys.exit()
+        raise SystemExit("Failed to initialise display driver.")
+
+    read_email()
+    last_image_fetch_time = datetime.now() - timedelta(hours=0, minutes=30)
+
+    image_filenames = find_image_filenames()
+    if not image_filenames:
+        raise SystemExit(
+            "No image files found in {}.".format(IMAGE_DIR))
+    # Create a new cycle
+    image_filenames_array = cycle(image_filenames)
 
     width = pygame.display.Info().current_w
     height = pygame.display.Info().current_h
@@ -92,13 +99,14 @@ def display_image():
             if event.type == pygame.KEYUP:
                 # Right arrow key to move to next image
                 if event.key == pygame.K_RIGHT:
-                    change_image(screen, next(image_filenames), width, height)
+                    change_image(screen, next(
+                        image_filenames_array), width, height)
                     # Reset the last image change time
                     last_image_change_time = datetime.now()
                     # Left arrow key to move to previous image
                 if event.key == pygame.K_LEFT:
                     change_image(
-                        screen, image_filenames.previous(), width, height)
+                        screen, image_filenames_array.previous(), width, height)
                     # Reset the last image change time
                     last_image_change_time = datetime.now()
             # pygame.QUIT is the 'x' in the top right of the modal
@@ -111,8 +119,8 @@ def display_image():
         # Get the difference between now and the last time we changed images to see if we need to change images
         time_since_last_image_change = (
             datetime.now() - last_image_change_time)
-        if time_since_last_image_change.total_seconds() > int(viewer_config.get('timePerPicture')):
-            change_image(screen, next(image_filenames), width, height)
+        if time_since_last_image_change.total_seconds() > int(TIME_PER_PICTURE):
+            change_image(screen, next(image_filenames_array), width, height)
             last_image_change_time = datetime.now()
 
         # Get the difference between now and the last time we fetched
@@ -121,10 +129,15 @@ def display_image():
         # but would be nice to fix.
         time_since_last_fetch = (
             datetime.now().minute - last_image_fetch_time.minute)
-        if time_since_last_fetch >= int(viewer_config.get('newPictureFetchDelay')):
+        if time_since_last_fetch >= int(NEW_PICTURE_FETCH_DELAY):
             last_image_fetch_time = datetime.now()
             read_email()
-            image_filenames = cycle(find_image_filename())
+            image_filenames = find_image_filenames()
+            if not image_filenames:
+                raise SystemExit(
+                    "No image files found in {}.".format(IMAGE_DIR))
+            # Create a new cycle
+            image_filenames_array = cycle(image_filenames)
 
     pygame.quit()
 

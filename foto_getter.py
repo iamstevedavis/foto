@@ -12,26 +12,26 @@ import configparser
 config = configparser.ConfigParser(interpolation=None)
 config.sections()
 config.read(['.env', 'config'])
-email_config = config['EMAIL']
+EMAIL_CONFIG = config['EMAIL']
+IMAGE_DIR = config['DEFAULT'].get("imageDir")
 
-ORG_EMAIL = "{}".format(email_config.get('emailDomain'))
-FROM_EMAIL = "{0}{1}".format(email_config.get(
-    'emailHandle'), email_config.get('emailDomain'))
-FROM_PWD = "{}".format(email_config.get('emailPassword'))
-SMTP_SERVER = "{}".format(email_config.get('smtpServer'))
-SMTP_PORT = int(email_config.get('smtpPort'))
+ORG_EMAIL = "{}".format(EMAIL_CONFIG.get('emailDomain'))
+FROM_EMAIL = "{0}{1}".format(EMAIL_CONFIG.get(
+    'emailHandle'), EMAIL_CONFIG.get('emailDomain'))
+FROM_PWD = "{}".format(EMAIL_CONFIG.get('emailPassword'))
+SMTP_SERVER = "{}".format(EMAIL_CONFIG.get('smtpServer'))
+SMTP_PORT = int(EMAIL_CONFIG.get('smtpPort'))
 
 # Save the attachment
 
 
 def save_attachment(part):
-    image_dir = config['DEFAULT'].get("imageDir")
-    full_path = '{}{}'.format(image_dir, part.get_filename())
+    full_path = '{}{}'.format(IMAGE_DIR, part.get_filename())
 
     # Create directory if it does not exist
-    if not Path(image_dir).is_dir():
+    if not Path(IMAGE_DIR).is_dir():
         try:
-            os.makedirs(os.path.dirname(image_dir))
+            os.makedirs(os.path.dirname(IMAGE_DIR))
         except OSError as exc:  # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
