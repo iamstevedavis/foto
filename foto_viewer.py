@@ -64,21 +64,6 @@ def change_image(screen, image_filename, width, height):
     pygame.display.update()
 
 
-def getDifferenceInMinutes(date1, date2):
-    fmt = '%Y-%m-%d %H:%M:%S'
-    d1 = datetime.strptime(date1, fmt)
-    d2 = datetime.strptime(date2, fmt)
-
-    # Convert to Unix timestamp
-    d1_ts = time.mktime(d1.timetuple())
-    d2_ts = time.mktime(d2.timetuple())
-
-    # They are now in seconds, subtract and then divide by 60 to get minutes.
-    return int(d2_ts-d1_ts) / 60
-
-# Main function containing the main event loop
-
-
 def display_image():
     if not pygame.image.get_extended():
         raise SystemExit(
