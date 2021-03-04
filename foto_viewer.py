@@ -1,6 +1,7 @@
 # First Party Imports #
 import os
-from datetime import datetime, timedelta
+import time
+from datetime import datetime
 
 # Third Party Imports #
 import configparser
@@ -62,6 +63,19 @@ def change_image(screen, image_filename, width, height):
     screen.blit(image, (0, 0))
     pygame.display.update()
 
+
+def getDifferenceInMinutes(date1, date2):
+    fmt = '%Y-%m-%d %H:%M:%S'
+    d1 = datetime.strptime(date1, fmt)
+    d2 = datetime.strptime(date2, fmt)
+
+    # Convert to Unix timestamp
+    d1_ts = time.mktime(d1.timetuple())
+    d2_ts = time.mktime(d2.timetuple())
+
+    # They are now in seconds, subtract and then divide by 60 to get minutes.
+    return int(d2_ts-d1_ts) / 60
+
 # Main function containing the main event loop
 
 
@@ -75,7 +89,7 @@ def display_image():
         raise SystemExit("Failed to initialise display driver.")
 
     read_email()
-    last_image_fetch_time = datetime.now() - timedelta(hours=0, minutes=30)
+    last_image_fetch_time = datetime.now()
 
     image_filenames = find_image_filenames()
     if not image_filenames:
@@ -123,13 +137,10 @@ def display_image():
             change_image(screen, next(image_filenames_array), width, height)
             last_image_change_time = datetime.now()
 
-        # Get the difference between now and the last time we fetched
-        # This is currently a bug because it could be houts difference but still
-        # less than 30 "minutes" apart. It should eventually correct itself
-        # but would be nice to fix.
         time_since_last_fetch = (
-            datetime.now().minute - last_image_fetch_time.minute)
-        if time_since_last_fetch >= int(NEW_PICTURE_FETCH_DELAY):
+            datetime.now() - last_image_fetch_time)
+        minutes_since_last_fetch = time_since_last_fetch.seconds / 60
+        if minutes_since_last_fetch >= int(NEW_PICTURE_FETCH_DELAY):
             last_image_fetch_time = datetime.now()
             read_email()
             image_filenames = find_image_filenames()

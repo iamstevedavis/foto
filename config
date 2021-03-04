@@ -5,7 +5,7 @@ imageDir = ./files/
 # How much time, in seconds, should elapse before moving to the next image
 timePerPicture = 30
 # How often, in minutes, should we wait between new image fetches
-newPictureFetchDelay = 30
+newPictureFetchDelay = 15
 
 [EMAIL]
 emailDomain = @gmail.com
