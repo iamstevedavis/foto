@@ -5,6 +5,7 @@ import traceback
 import os
 import errno
 from pathlib import Path
+from foto_reconcile import reconcile
 
 # Third Party Imports #
 import configparser
@@ -14,6 +15,7 @@ config.sections()
 config.read(['.env', 'config'])
 EMAIL_CONFIG = config['EMAIL']
 IMAGE_DIR = config['DEFAULT'].get("imageDir")
+SHOULD_RECONCILE = config['DEFAULT'].get("shouldReconcile")
 
 ORG_EMAIL = "{}".format(EMAIL_CONFIG.get('emailDomain'))
 FROM_EMAIL = "{0}{1}".format(EMAIL_CONFIG.get(
@@ -21,8 +23,6 @@ FROM_EMAIL = "{0}{1}".format(EMAIL_CONFIG.get(
 FROM_PWD = "{}".format(EMAIL_CONFIG.get('emailPassword'))
 SMTP_SERVER = "{}".format(EMAIL_CONFIG.get('smtpServer'))
 SMTP_PORT = int(EMAIL_CONFIG.get('smtpPort'))
-
-# Save the attachment
 
 
 def save_attachment(part):
@@ -42,8 +42,6 @@ def save_attachment(part):
             file_handle.write(part.get_payload(decode=1))
             file_handle.close()
 
-# Check if the attachment is a jpg
-
 
 def check_attachment(fileName, contentType):
     if fileName is None:
@@ -51,10 +49,9 @@ def check_attachment(fileName, contentType):
 
     return fileName.endswith('.jpg') and contentType == 'image/jpeg'
 
-# Read email from the provider
-
 
 def read_email():
+    files_saved = []
     try:
         mail = imaplib.IMAP4_SSL(SMTP_SERVER)
         mail.login(FROM_EMAIL, FROM_PWD)
@@ -74,9 +71,13 @@ def read_email():
                     for part in msg.walk():
                         if check_attachment(part.get_filename(), part.get_content_type()):
                             save_attachment(part)
+                            files_saved.append(part.get_filename())
     except Exception as ex:
         traceback.print_exc()
         print(str(ex))
+
+    if files_saved and SHOULD_RECONCILE:
+        reconcile(files_saved)
 
 
 if __name__ == '__main__':

@@ -20,9 +20,6 @@ IMAGE_DIR = config['DEFAULT'].get("imageDir")
 TIME_PER_PICTURE = VIEWER_CONFIG.get('timePerPicture')
 NEW_PICTURE_FETCH_DELAY = VIEWER_CONFIG.get('newPictureFetchDelay')
 
-# Gets all images in the 'imageDir' directory filtered on the filetypes listed
-# Currently only jpg files are downloaded
-
 
 def find_image_filenames():
     image_filenames = []
@@ -38,8 +35,6 @@ def find_image_filenames():
 
     return image_filenames
 
-# I found this on the internet and it seems to work
-
 
 def find_display_driver():
     for driver in ["fbcon", "directfb", "svgalib"]:
@@ -52,8 +47,6 @@ def find_display_driver():
             pass
     return False
 
-# Load the next image and update the display
-
 
 def change_image(screen, image_filename, width, height):
     image = pygame.image.load(
@@ -62,6 +55,25 @@ def change_image(screen, image_filename, width, height):
     image = pygame.transform.scale(image, (width, height))
     screen.blit(image, (0, 0))
     pygame.display.update()
+
+
+def is_time_to_fetch_images(last_image_fetch_time):
+    time_since_last_fetch = (
+        datetime.now() - last_image_fetch_time)
+    minutes_since_last_fetch = time_since_last_fetch.seconds / 60
+    if minutes_since_last_fetch >= int(NEW_PICTURE_FETCH_DELAY):
+        return True
+
+    return False
+
+
+def is_time_to_change_image(last_image_change_time):
+    time_since_last_image_change = (
+        datetime.now() - last_image_change_time)
+    if time_since_last_image_change.total_seconds() > int(TIME_PER_PICTURE):
+        return True
+
+    return False
 
 
 def display_image():
@@ -116,16 +128,11 @@ def display_image():
                 running = False
 
         # Get the difference between now and the last time we changed images to see if we need to change images
-        time_since_last_image_change = (
-            datetime.now() - last_image_change_time)
-        if time_since_last_image_change.total_seconds() > int(TIME_PER_PICTURE):
+        if is_time_to_change_image(last_image_change_time):
             change_image(screen, next(image_filenames_array), width, height)
             last_image_change_time = datetime.now()
 
-        time_since_last_fetch = (
-            datetime.now() - last_image_fetch_time)
-        minutes_since_last_fetch = time_since_last_fetch.seconds / 60
-        if minutes_since_last_fetch >= int(NEW_PICTURE_FETCH_DELAY):
+        if is_time_to_fetch_images(last_image_fetch_time):
             last_image_fetch_time = datetime.now()
             read_email()
             image_filenames = find_image_filenames()

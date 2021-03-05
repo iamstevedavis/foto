@@ -1,5 +1,9 @@
 [DEFAULT]
 imageDir = ./files/
+# Indicates if we should compare the files on disk to the files fetched
+# and delete the difference. Akin to removing the files locally if the
+# email was deleted.
+shouldReconcile = True
 
 [VIEWER]
 # How much time, in seconds, should elapse before moving to the next image
