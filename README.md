@@ -1,6 +1,6 @@
 # FOTO
 
-I am creating this app to run on a raspberry pi so that my family can send pictures to my grandma more easily.
+I am creating this app to run on a raspberry pi so that my family can send pictures to my grandma more easily during the pandemic.
 
 ## Dev Usage
 
@@ -11,6 +11,8 @@ python main.py
 ```
 
 ## Raspberry Pi Usage
+
+### Basic Setup
 
 1. Install the latest version of python 3, whatever it may be at the time.
    1. `apt install python3`
@@ -26,7 +28,9 @@ python main.py
 5. Run the app
    1. `python3 main.py`
 
-If that works, we can set it up so it runs on boot.
+### Start on Boot
+
+If that works, we can set it up so it runs on boot using a service.
 
 1. Create a system service
    1. `sudo systemctl edit --force --full foto.service`
@@ -34,6 +38,7 @@ If that works, we can set it up so it runs on boot.
 
 I have no idea what portion in [Unit] actually works as it seems this is an ongoing issue for people trying to run scripts after the network is connected.  What I do know works is the ExecStartPre in the [Service] section. Feel free to put up an MR if you can figure it out.
 
+#### **`foto.service`**
 ```bash
 [Unit]
 Description=Foto by iamstevedavis
@@ -63,7 +68,9 @@ If you want to debug (check if the network is properly connecting):
 
 - `sudo systemctl status foto.service`
 
-Here are a few links on the topic:
+### Additional Reading on Service Setup
+
+Here are a few links on the topic covering the issue I mentioned above:
 
 [Improved (=reliable) Wait for Network implementation](https://www.raspberrypi.org/forums/viewtopic.php?t=187225)
 
@@ -74,6 +81,26 @@ Here are a few links on the topic:
 [Cause a script to execute after networking has started?](https://unix.stackexchange.com/questions/126009/cause-a-script-to-execute-after-networking-has-started)
 
 [Running a script after an internet connection is established](https://raspberrypi.stackexchange.com/questions/78991/running-a-script-after-an-internet-connection-is-established/79033)
+
+### Startup After Updating Repo
+
+One additional thing I did was wrote a shell script to automatically pull the latest code on boot. I did not include this in the repo because it's specific to me, you can copy and modify it for your pi. If you do, change your ExecStart to point to the script.
+
+#### **`startup.sh`**
+```bash
+#!/bin/bash
+
+cd ~/git/foto
+echo "Pull latest foto"
+git pull origin master
+echo "Got latest foto"
+echo "Starting foto"
+python3 /home/pi/git/foto/main.py
+```
+
+Then in your service:
+
+`ExecStart=/bin/sh /home/pi/Desktop/foto.sh`
 
 ## Config
 
