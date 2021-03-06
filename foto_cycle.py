@@ -1,4 +1,5 @@
 # This is a very simple implementation of a circular array
+
 class cycle:
     def __init__(self, c):
         self._c = c

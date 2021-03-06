@@ -1,4 +1,3 @@
-# First Party Imports #
 import imaplib
 import email
 import traceback
@@ -24,8 +23,18 @@ FROM_PWD = "{}".format(EMAIL_CONFIG.get('emailPassword'))
 SMTP_SERVER = "{}".format(EMAIL_CONFIG.get('smtpServer'))
 SMTP_PORT = int(EMAIL_CONFIG.get('smtpPort'))
 
+"""
+    Read through emails and save their attachments
+    if they are valid based on criteria as specified in check_attachment.
+"""
+
 
 def save_attachment(part):
+    """Save email attachment to disk.
+
+    Args:
+        part (container): An email attachment
+    """
     full_path = '{}{}'.format(IMAGE_DIR, part.get_filename())
 
     # Create directory if it does not exist
@@ -43,14 +52,25 @@ def save_attachment(part):
             file_handle.close()
 
 
-def check_attachment(fileName, contentType):
-    if fileName is None:
+def check_attachment(file_name, content_type):
+    """Verify a file name and content type
+
+    Args:
+        file_name (string): The name of a file
+        content_type (string): The content type of a file
+
+    Returns:
+        boolean: Indicates if a given file name and content type are ok.
+    """
+    if file_name is None:
         return False
 
-    return fileName.endswith('.jpg') and contentType == 'image/jpeg'
+    return file_name.endswith('.jpg') and content_type == 'image/jpeg'
 
 
 def read_email():
+    """Read through emails and their attachments
+    """
     files_saved = []
     try:
         mail = imaplib.IMAP4_SSL(SMTP_SERVER)
