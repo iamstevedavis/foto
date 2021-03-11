@@ -17,6 +17,7 @@ config.sections()
 config.read(['.env', 'config'])
 VIEWER_CONFIG = config['VIEWER']
 IMAGE_DIR = config['DEFAULT'].get("imageDir")
+FULLSCREEN = config['DEFAULT'].getboolean("fullscreen", "True")
 TIME_PER_PICTURE = VIEWER_CONFIG.get('timePerPicture')
 NEW_PICTURE_FETCH_DELAY = VIEWER_CONFIG.get('newPictureFetchDelay')
 
@@ -97,16 +98,27 @@ def display_image():
 
     width = pygame.display.Info().current_w
     height = pygame.display.Info().current_h
-    # Change this line to pygame.FULLSCREEN on release or use RESIZABLE when testing
-    screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+
+    if FULLSCREEN:
+        screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+    else:
+        screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+
     pygame.mouse.set_visible(False)
     last_image_change_time = datetime(1970, 1, 1)
     running = True
+    clock = pygame.time.Clock()
 
     # Main event loop
     while running:
+        clock.tick(1)
         # Check for key presses
         for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONUP:
+                change_image(screen, next(
+                    image_filenames_array), width, height)
+                # Reset the last image change time
+                last_image_change_time = datetime.now()
             if event.type == pygame.KEYUP:
                 # Right arrow key to move to next image
                 if event.key == pygame.K_RIGHT:
