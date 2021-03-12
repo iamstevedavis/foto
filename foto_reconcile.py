@@ -10,8 +10,15 @@ config.sections()
 config.read(['.env', 'config'])
 IMAGE_DIR = config['DEFAULT'].get("imageDir")
 
-
 def reconcile(file_names):
+    """Ensure that the existing files match what is on the server
+
+    Args:
+        file_names (array): List of filenames
+
+    Returns:
+        int: The number of files deleted
+    """
     if not file_names:
         print("file_names cannot be empty")
         return 0

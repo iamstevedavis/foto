@@ -1,6 +1,5 @@
 # First Party Imports #
 import os
-import time
 from datetime import datetime
 
 # Third Party Imports #
@@ -21,8 +20,12 @@ FULLSCREEN = config['DEFAULT'].getboolean("fullscreen", "True")
 TIME_PER_PICTURE = VIEWER_CONFIG.get('timePerPicture')
 NEW_PICTURE_FETCH_DELAY = VIEWER_CONFIG.get('newPictureFetchDelay')
 
-
 def find_image_filenames():
+    """Get a list of all files that match a one of the supported extensions
+
+    Returns:
+        array: An array of filenames that match the extension criteria
+    """
     image_filenames = []
     for filename in os.listdir(IMAGE_DIR):
         if filename.lower().endswith(".bmp"):
@@ -49,12 +52,26 @@ def find_display_driver():
     return False
 
 
-def change_image(screen, image_filename, width, height):
+def change_image(screen, image_filename, screen_width, screen_height):
     image = pygame.image.load(
         '{}/{}'.format(IMAGE_DIR, image_filename))
-    # Is there a better function that maintains aspect ratio?
-    image = pygame.transform.scale(image, (width, height))
-    screen.blit(image, (0, 0))
+    image_height = image.get_height()
+    new_width = screen_width
+
+    # Check if image is portrait shot
+    if image_height > image.get_width():
+        # Check if the image is too tall
+        if image_height > screen_height:
+            # reduce width to keep ratio
+            new_width = screen_width * (screen_height * 0.5) / screen_height
+        image = pygame.transform.scale(image, (int(new_width), int(screen_height)))
+
+    image = pygame.transform.scale(image, (int(new_width), int(screen_height)))
+
+    screen.fill((0,0,0))
+    pygame.display.update()
+
+    screen.blit(image, ((screen_width / 2) - (new_width / 2), 0))
     pygame.display.update()
 
 
@@ -86,23 +103,25 @@ def display_image():
     if not find_display_driver():
         raise SystemExit("Failed to initialise display driver.")
 
-    read_email()
     last_image_fetch_time = datetime.now()
-
     image_filenames = find_image_filenames()
+
     if not image_filenames:
-        raise SystemExit(
-            "No image files found in {}.".format(IMAGE_DIR))
+        read_email()
+        image_filenames = find_image_filenames()
+        if not image_filenames:
+            raise SystemExit(
+                "No image files found in {}.".format(IMAGE_DIR))
+
     # Create a new cycle
     image_filenames_array = cycle(image_filenames)
-
-    width = pygame.display.Info().current_w
-    height = pygame.display.Info().current_h
+    screen_width = pygame.display.Info().current_w
+    screen_height = pygame.display.Info().current_h
 
     if FULLSCREEN:
-        screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+        screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
     else:
-        screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+        screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
 
     pygame.mouse.set_visible(False)
     last_image_change_time = datetime(1970, 1, 1)
@@ -116,20 +135,20 @@ def display_image():
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONUP:
                 change_image(screen, next(
-                    image_filenames_array), width, height)
+                    image_filenames_array), screen_width, screen_height)
                 # Reset the last image change time
                 last_image_change_time = datetime.now()
             if event.type == pygame.KEYUP:
                 # Right arrow key to move to next image
                 if event.key == pygame.K_RIGHT:
                     change_image(screen, next(
-                        image_filenames_array), width, height)
+                        image_filenames_array), screen_width, screen_height)
                     # Reset the last image change time
                     last_image_change_time = datetime.now()
                     # Left arrow key to move to previous image
                 if event.key == pygame.K_LEFT:
                     change_image(
-                        screen, image_filenames_array.previous(), width, height)
+                        screen, image_filenames_array.previous(), screen_width, screen_height)
                     # Reset the last image change time
                     last_image_change_time = datetime.now()
             # pygame.QUIT is the 'x' in the top right of the modal
@@ -139,11 +158,12 @@ def display_image():
                     (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)):
                 running = False
 
-        # Get the difference between now and the last time we changed images to see if we need to change images
+        # Check if it is time to change image
         if is_time_to_change_image(last_image_change_time):
-            change_image(screen, next(image_filenames_array), width, height)
+            change_image(screen, next(image_filenames_array), screen_width, screen_height)
             last_image_change_time = datetime.now()
 
+        # Check if it is time to fetch images
         if is_time_to_fetch_images(last_image_fetch_time):
             last_image_fetch_time = datetime.now()
             read_email()
