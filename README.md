@@ -2,7 +2,7 @@
 
 I am creating this app to run on a raspberry pi so that my family can send pictures to my grandma more easily during the pandemic.
 
-https://user-images.githubusercontent.com/5615792/111934055-114ebe00-8a97-11eb-99fa-d4e1ec899bcd.mp4
+![foto_gh](https://user-images.githubusercontent.com/5615792/111934373-a5208a00-8a97-11eb-8e40-a7b229224431.gif)
 
 ## Dev Usage
 
