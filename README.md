@@ -2,6 +2,8 @@
 
 I am creating this app to run on a raspberry pi so that my family can send pictures to my grandma more easily during the pandemic.
 
+https://user-images.githubusercontent.com/5615792/111934055-114ebe00-8a97-11eb-99fa-d4e1ec899bcd.mp4
+
 ## Dev Usage
 
 ```bash
